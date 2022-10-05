@@ -49,8 +49,8 @@ class Coin(arcade.Sprite):
     def breed(self):
         if self.breed_point >= 600:
             new_coin = Coin(":resources:images/items/coinGold.png", SPRITE_SCALING_COIN)
-            new_coin.center_x = random.randrange(SCREEN_WIDTH)
-            new_coin.center_y = random.randrange(SCREEN_HEIGHT)
+            new_coin.center_x = self.center_x + random.randrange(-2, 2)
+            new_coin.center_y = self.center_y + random.randrange(-2, 2)
             self.breed_point = 0
             return new_coin
         else:
