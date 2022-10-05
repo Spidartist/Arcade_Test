@@ -22,6 +22,7 @@ SPRITE_SCALING_COIN = 0.2
 COIN_COUNT = 10
 COIN_SPEED = 1.0
 PLAYER_COUNT = 5
+MAX_PLAYER = 30
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 800
@@ -196,19 +197,20 @@ class MyGame(arcade.Window):
             # Check if we need to bounce of bottom edge
             if player_sprite.center_y < 0:
                 player_sprite.change_y *= -1
-            if player_sprite.breed_point >= 600:
-                new_player = arcade.Sprite(
-                    ":resources:images/animated_characters/female_person/femalePerson_idle.png",
-                    SPRITE_SCALING_PLAYER)
-                new_player.center_x = player_sprite.center_x + random.randrange(-1, 1)
-                new_player.center_y = player_sprite.center_y + random.randrange(-1, 1)
-                new_player.change_x = -player_sprite.change_x
-                new_player.change_y = -player_sprite.change_y
-                new_player.breed_point = 0
-                new_gen.append(new_player)
-                player_sprite.breed_point = 0
-            else:
-                player_sprite.breed_point += random.randrange(1, 6)
+            if len(self.player_list) < MAX_PLAYER:
+                if player_sprite.breed_point >= 600:
+                    new_player = arcade.Sprite(
+                        ":resources:images/animated_characters/female_person/femalePerson_idle.png",
+                        SPRITE_SCALING_PLAYER)
+                    new_player.center_x = player_sprite.center_x + random.randrange(-1, 1)
+                    new_player.center_y = player_sprite.center_y + random.randrange(-1, 1)
+                    new_player.change_x = -player_sprite.change_x
+                    new_player.change_y = -player_sprite.change_y
+                    new_player.breed_point = 0
+                    new_gen.append(new_player)
+                    player_sprite.breed_point = 0
+                else:
+                    player_sprite.breed_point += random.randrange(1, 6)
         for new in new_gen:
             self.player_list.append(new)
         new_coin = arcade.SpriteList()
