@@ -44,7 +44,7 @@ class Coin(arcade.Sprite):
         if self.hungry_point <= 0:
             self.kill()
         else:
-            self.hungry_point -= 5
+            self.hungry_point -= 1
 
     def breed(self):
         if self.breed_point >= 600:
@@ -173,6 +173,9 @@ class MyGame(arcade.Window):
         for i, coin in enumerate(self.coin_list):
             output = f"Score: {coin.breed_point}"
             arcade.draw_text(output, 1000, i*20, arcade.color.WHITE, 14)
+        for i, coin in enumerate(self.coin_list):
+            output = f"Score: {coin.hungry_point}"
+            arcade.draw_text(output, 1100, i*20, arcade.color.WHITE, 14)
 
     def on_update(self, delta_time):
         """ Movement and game logic """
@@ -210,6 +213,7 @@ class MyGame(arcade.Window):
             self.player_list.append(new)
         new_coin = arcade.SpriteList()
         for coin in self.coin_list:
+            coin.hunger()
             ret = coin.breed()
             if ret != 1:
                 new_coin.append(ret)
@@ -219,10 +223,12 @@ class MyGame(arcade.Window):
         # Generate a list of all sprites that collided with the player.
         for coin in self.coin_list:
             hit_list = arcade.check_for_collision_with_list(coin, self.player_list)
+            if hit_list is not None:
 
-            # Loop through each colliding sprite, remove it, and add to the score.
-            for player in hit_list:
-                player.kill()
+                # Loop through each colliding sprite, remove it, and add to the score.
+                for player in hit_list:
+                    player.kill()
+                coin.hungry_point += 100*len(hit_list)
 
 
 def main():
