@@ -240,6 +240,7 @@ class MyGame(arcade.Window):
                 pred.follow_sprite(self.prey_list)
             if pred.center_x > SCREEN_WIDTH:
                 pred.center_x = SCREEN_WIDTH
+
             # Check if we need to bounce of top edge
             if pred.center_y > SCREEN_HEIGHT:
                 pred.center_y = SCREEN_HEIGHT
