@@ -49,7 +49,7 @@ class Coin(arcade.Sprite):
 
     def breed(self):
         if self.breed_point >= 600:
-            new_coin = Coin(":resources:images/items/coinGold.png", SPRITE_SCALING_COIN)
+            new_coin = Coin(":resources:images/enemies/slimePurple.png", SPRITE_SCALING_COIN)
             new_coin.center_x = self.center_x + random.randrange(-2, 2)
             new_coin.center_y = self.center_y + random.randrange(-2, 2)
             self.breed_point = 0
@@ -141,7 +141,7 @@ class MyGame(arcade.Window):
 
         # Character image from kenney.nl
         for i in range(PLAYER_COUNT):
-            player_sprite = arcade.Sprite(":resources:images/animated_characters/female_person/femalePerson_idle.png",
+            player_sprite = arcade.Sprite(":resources:images/enemies/slimeBlue.png",
                                           SPRITE_SCALING_PLAYER)
             player_sprite.center_x = random.randrange(SCREEN_WIDTH)
             player_sprite.center_y = random.randrange(SCREEN_HEIGHT)
@@ -154,7 +154,7 @@ class MyGame(arcade.Window):
         for i in range(COIN_COUNT):
             # Create the coin instance
             # Coin image from kenney.nl
-            coin = Coin(":resources:images/items/coinGold.png", SPRITE_SCALING_COIN)
+            coin = Coin(":resources:images/enemies/slimePurple.png", SPRITE_SCALING_COIN)
 
             # Position the coin
             coin.center_x = random.randrange(SCREEN_WIDTH)
@@ -200,7 +200,7 @@ class MyGame(arcade.Window):
             if len(self.player_list) < MAX_PLAYER:
                 if player_sprite.breed_point >= 600:
                     new_player = arcade.Sprite(
-                        ":resources:images/animated_characters/female_person/femalePerson_idle.png",
+                        ":resources:images/enemies/slimeBlue.png",
                         SPRITE_SCALING_PLAYER)
                     new_player.center_x = player_sprite.center_x + random.randrange(-1, 1)
                     new_player.center_y = player_sprite.center_y + random.randrange(-1, 1)
