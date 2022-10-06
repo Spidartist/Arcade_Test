@@ -22,48 +22,17 @@ SPRITE_SCALING_PRED = 0.7
 PRED_COUNT = 1
 PRED_SPEED = 1.0
 
-PREY_COUNT = 1
+PREY_COUNT = 5
 MAX_PREY = 30
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 800
 SCREEN_TITLE = "Sprite Follow prey Simple Example 2"
 
+PRED_ANGLE_SPEED = 5
 SPRITE_SPEED = 0.5
 PRED_IMAGE = ":resources:images/topdown_tanks/tank_red.png"
 PREY_IMAGE = ":resources:images/topdown_tanks/tank_blue.png"
-
-class GameOverView(arcade.View):
-    """ View to show when game is over """
-
-    def __init__(self, *args, winner):
-        """ This is run once when we switch to this view """
-        super(GameOverView, self).__init__(*args)
-        self.winner = winner
-        # Reset the viewport, necessary if we have a scrolling game, and we need
-        # to reset the viewport back to the start, so we can see what we draw.
-        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
-
-    def on_show_view(self):
-        """Called when switching to this view."""
-        arcade.set_background_color(arcade.color.DARK_BROWN)
-
-    def on_draw(self):
-        """Draw the menu"""
-        self.clear()
-        arcade.draw_text(
-            self.winner + " win!",
-            SCREEN_WIDTH / 2,
-            SCREEN_HEIGHT / 2,
-            arcade.color.BLACK,
-            font_size=30,
-            anchor_x="center",
-        )
-    def on_mouse_press(self, _x, _y, _button, _modifiers):
-        """ If the user presses the mouse button, re-start the game. """
-        game_view = MyGame()
-        game_view.setup()
-        self.window.show_view(game_view)
 
 
 class Pred(arcade.Sprite):
@@ -75,6 +44,7 @@ class Pred(arcade.Sprite):
         super(Pred, self).__init__(*args)
         self.breed_point = 0
         self.hungry_point = 500
+        self.angle = 110
 
     def hunger(self):
         if self.hungry_point <= 0:
@@ -134,7 +104,7 @@ class Pred(arcade.Sprite):
             x_diff = dest_x - start_x
             y_diff = dest_y - start_y
             angle = math.atan2(y_diff, x_diff)
-
+            self.angle = math.degrees(angle) + 90
             # Taking into account the angle, calculate our change_x
             # and change_y. Velocity is how fast the bullet travels.
             self.change_x = math.cos(angle) * PRED_SPEED
@@ -206,6 +176,9 @@ class MyGame(arcade.Window):
             output = f"Prey Breed: {prey.breed_point}"
             arcade.draw_text(output, 10, i*20, arcade.color.WHITE, 14)
         for i, pred in enumerate(self.pred_list):
+            angle_rad = math.radians(pred.angle)
+
+            arcade.draw_line(pred.center_x, pred.center_y, pred.center_x - 20 * math.sin(angle_rad), pred.center_y + 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
             output = f"Breed: {pred.breed_point}"
             arcade.draw_text(output, 900, i*20, arcade.color.WHITE, 14)
         for i, pred in enumerate(self.pred_list):
@@ -218,12 +191,14 @@ class MyGame(arcade.Window):
 
     def on_update(self, delta_time):
         """ Movement and game logic """
-        if len(self.prey_list) == 0:
-            self.winner = "Prey"
+
         if len(self.pred_list) == 0:
+            self.winner = "Prey"
+        if len(self.prey_list) == 0:
             self.winner = "Predator"
 
         new_gen = arcade.SpriteList()
+
         for prey_sprite in self.prey_list:
             # Move the center of the prey sprite to match the mouse x, y
             prey_sprite.center_x += prey_sprite.change_x
