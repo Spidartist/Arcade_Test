@@ -1,9 +1,9 @@
 """
-Sprite Follow Player 2
+Sprite Follow prey 2
 
-This calculates a 'vector' towards the player and randomly updates it based
-on the player's location. This is a bit more complex, but more interesting
-way of following the player.
+This calculates a 'vector' towards the prey and randomly updates it based
+on the prey's location. This is a bit more complex, but more interesting
+way of following the prey.
 
 Artwork from https://kenney.nl
 
@@ -17,27 +17,62 @@ import math
 import os
 
 # --- Constants ---
-SPRITE_SCALING_PLAYER = 0.5
-SPRITE_SCALING_COIN = 0.2
-COIN_COUNT = 10
-COIN_SPEED = 1.0
-PLAYER_COUNT = 5
-MAX_PLAYER = 30
+SPRITE_SCALING_PREY = 0.9
+SPRITE_SCALING_PRED = 0.7
+PRED_COUNT = 1
+PRED_SPEED = 1.0
+
+PREY_COUNT = 1
+MAX_PREY = 30
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 800
-SCREEN_TITLE = "Sprite Follow Player Simple Example 2"
+SCREEN_TITLE = "Sprite Follow prey Simple Example 2"
 
 SPRITE_SPEED = 0.5
+PRED_IMAGE = ":resources:images/topdown_tanks/tank_red.png"
+PREY_IMAGE = ":resources:images/topdown_tanks/tank_blue.png"
+
+class GameOverView(arcade.View):
+    """ View to show when game is over """
+
+    def __init__(self, *args, winner):
+        """ This is run once when we switch to this view """
+        super(GameOverView, self).__init__(*args)
+        self.winner = winner
+        # Reset the viewport, necessary if we have a scrolling game, and we need
+        # to reset the viewport back to the start, so we can see what we draw.
+        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+
+    def on_show_view(self):
+        """Called when switching to this view."""
+        arcade.set_background_color(arcade.color.DARK_BROWN)
+
+    def on_draw(self):
+        """Draw the menu"""
+        self.clear()
+        arcade.draw_text(
+            self.winner + " win!",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2,
+            arcade.color.BLACK,
+            font_size=30,
+            anchor_x="center",
+        )
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, re-start the game. """
+        game_view = MyGame()
+        game_view.setup()
+        self.window.show_view(game_view)
 
 
-class Coin(arcade.Sprite):
+class Pred(arcade.Sprite):
     """
-    This class represents the coins on our screen. It is a child class of
+    This class represents the preds on our screen. It is a child class of
     the arcade library's "Sprite" class.
     """
     def __init__(self, *args):
-        super(Coin, self).__init__(*args)
+        super(Pred, self).__init__(*args)
         self.breed_point = 0
         self.hungry_point = 500
 
@@ -49,28 +84,28 @@ class Coin(arcade.Sprite):
 
     def breed(self):
         if self.breed_point >= 600:
-            new_coin = Coin(":resources:images/enemies/slimePurple.png", SPRITE_SCALING_COIN)
-            new_coin.center_x = self.center_x + random.randrange(-2, 2)
-            new_coin.center_y = self.center_y + random.randrange(-2, 2)
+            new_pred = Pred(PRED_IMAGE, SPRITE_SCALING_PRED)
+            new_pred.center_x = self.center_x + random.randrange(-2, 2)
+            new_pred.center_y = self.center_y + random.randrange(-2, 2)
             self.breed_point = 0
-            return new_coin
+            return new_pred
         else:
             self.breed_point += 1
         return 1
 
-    def find_closest(self, player_list):
+    def find_closest(self, prey_list):
         min_dist = 10000
         closest = None
-        for player_sprite in player_list:
-            x_diff = player_sprite.center_x - self.center_x
-            y_diff = player_sprite.center_y - self.center_y
+        for prey_sprite in prey_list:
+            x_diff = prey_sprite.center_x - self.center_x
+            y_diff = prey_sprite.center_y - self.center_y
             distance = math.sqrt(x_diff ** 2 + y_diff ** 2)
             if distance < min_dist:
                 min_dist = distance
-                closest = player_sprite
+                closest = prey_sprite
         return closest
 
-    def follow_sprite(self, player_list):
+    def follow_sprite(self, prey_list):
         """
         This function will move the current sprite towards whatever
         other sprite is specified as a parameter.
@@ -79,19 +114,19 @@ class Coin(arcade.Sprite):
         the target sprite, and not jump around if the sprite is not off
         an exact multiple of SPRITE_SPEED.
         """
-        player_sprite = self.find_closest(player_list)
+        prey_sprite = self.find_closest(prey_list)
         self.center_x += self.change_x
         self.center_y += self.change_y
 
         # Random 1 in 100 chance that we'll change from our old direction and
-        # then re-aim toward the player
+        # then re-aim toward the prey
         if random.randrange(100) == 0:
             start_x = self.center_x
             start_y = self.center_y
 
             # Get the destination location for the bullet
-            dest_x = player_sprite.center_x
-            dest_y = player_sprite.center_y
+            dest_x = prey_sprite.center_x
+            dest_y = prey_sprite.center_y
 
             # Do math to calculate how to get the bullet to the destination.
             # Calculation the angle in radians between the start points
@@ -102,8 +137,8 @@ class Coin(arcade.Sprite):
 
             # Taking into account the angle, calculate our change_x
             # and change_y. Velocity is how fast the bullet travels.
-            self.change_x = math.cos(angle) * COIN_SPEED
-            self.change_y = math.sin(angle) * COIN_SPEED
+            self.change_x = math.cos(angle) * PRED_SPEED
+            self.change_y = math.sin(angle) * PRED_SPEED
 
 
 class MyGame(arcade.Window):
@@ -122,10 +157,10 @@ class MyGame(arcade.Window):
         os.chdir(file_path)
 
         # Variables that will hold sprite lists
-        self.player_list = None
-        self.coin_list = None
-
-        # Set up the player info
+        self.prey_list = None
+        self.pred_list = None
+        self.winner = None
+        # Set up the prey info
 
         # Don't show the mouse cursor
         self.set_mouse_visible(False)
@@ -136,101 +171,107 @@ class MyGame(arcade.Window):
         """ Set up the game and initialize the variables. """
 
         # Sprite lists
-        self.player_list = arcade.SpriteList()
-        self.coin_list = arcade.SpriteList()
+        self.prey_list = arcade.SpriteList()
+        self.pred_list = arcade.SpriteList()
 
         # Character image from kenney.nl
-        for i in range(PLAYER_COUNT):
-            player_sprite = arcade.Sprite(":resources:images/enemies/slimeBlue.png",
-                                          SPRITE_SCALING_PLAYER)
-            player_sprite.center_x = random.randrange(SCREEN_WIDTH)
-            player_sprite.center_y = random.randrange(SCREEN_HEIGHT)
-            player_sprite.change_x = 0.6
-            player_sprite.change_y = 0.4
-            player_sprite.breed_point = 0
-            self.player_list.append(player_sprite)
+        for i in range(PREY_COUNT):
+            prey_sprite = arcade.Sprite(PREY_IMAGE, SPRITE_SCALING_PREY)
+            prey_sprite.center_x = random.randrange(SCREEN_WIDTH)
+            prey_sprite.center_y = random.randrange(SCREEN_HEIGHT)
+            prey_sprite.change_x = 0.6
+            prey_sprite.change_y = 0.4
+            prey_sprite.breed_point = 0
+            self.prey_list.append(prey_sprite)
 
-        # Create the coins
-        for i in range(COIN_COUNT):
-            # Create the coin instance
-            # Coin image from kenney.nl
-            coin = Coin(":resources:images/enemies/slimePurple.png", SPRITE_SCALING_COIN)
+        # Create the preds
+        for i in range(PRED_COUNT):
+            # Create the pred instance
+            # pred image from kenney.nl
+            pred = Pred(PRED_IMAGE, SPRITE_SCALING_PRED)
 
-            # Position the coin
-            coin.center_x = random.randrange(SCREEN_WIDTH)
-            coin.center_y = random.randrange(SCREEN_HEIGHT)
+            # Position the pred
+            pred.center_x = random.randrange(SCREEN_WIDTH)
+            pred.center_y = random.randrange(SCREEN_HEIGHT)
 
-            # Add the coin to the lists
-            self.coin_list.append(coin)
+            # Add the pred to the lists
+            self.pred_list.append(pred)
 
     def on_draw(self):
         """ Draw everything """
         self.clear()
-        self.coin_list.draw()
-        self.player_list.draw()
-        for i, player in enumerate(self.player_list):
-            output = f"Score: {player.breed_point}"
+        self.pred_list.draw()
+        self.prey_list.draw()
+        for i, prey in enumerate(self.prey_list):
+            output = f"Prey Breed: {prey.breed_point}"
             arcade.draw_text(output, 10, i*20, arcade.color.WHITE, 14)
-        for i, coin in enumerate(self.coin_list):
-            output = f"Score: {coin.breed_point}"
-            arcade.draw_text(output, 1000, i*20, arcade.color.WHITE, 14)
-        for i, coin in enumerate(self.coin_list):
-            output = f"Score: {coin.hungry_point}"
-            arcade.draw_text(output, 1100, i*20, arcade.color.WHITE, 14)
+        for i, pred in enumerate(self.pred_list):
+            output = f"Breed: {pred.breed_point}"
+            arcade.draw_text(output, 900, i*20, arcade.color.WHITE, 14)
+        for i, pred in enumerate(self.pred_list):
+            output = f"Hungry: {pred.hungry_point}"
+            arcade.draw_text(output, 1050, i*20, arcade.color.WHITE, 14)
+        if self.winner is not None:
+            output = self.winner + " win!"
+            arcade.draw_text(output, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, 14)
+            arcade.pause(1)
 
     def on_update(self, delta_time):
         """ Movement and game logic """
+        if len(self.prey_list) == 0:
+            self.winner = "Prey"
+        if len(self.pred_list) == 0:
+            self.winner = "Predator"
+
         new_gen = arcade.SpriteList()
-        for player_sprite in self.player_list:
-            # Move the center of the player sprite to match the mouse x, y
-            player_sprite.center_x += player_sprite.change_x
-            player_sprite.center_y += player_sprite.change_y
+        for prey_sprite in self.prey_list:
+            # Move the center of the prey sprite to match the mouse x, y
+            prey_sprite.center_x += prey_sprite.change_x
+            prey_sprite.center_y += prey_sprite.change_y
             # Check if we need to bounce of right edge
-            if player_sprite.center_x > SCREEN_WIDTH:
-                player_sprite.change_x *= -1
+            if prey_sprite.center_x > SCREEN_WIDTH:
+                prey_sprite.change_x *= -1
             # Check if we need to bounce of top edge
-            if player_sprite.center_y > SCREEN_HEIGHT:
-                player_sprite.change_y *= -1
+            if prey_sprite.center_y > SCREEN_HEIGHT:
+                prey_sprite.change_y *= -1
             # Check if we need to bounce of left edge
-            if player_sprite.center_x < 0:
-                player_sprite.change_x *= -1
+            if prey_sprite.center_x < 0:
+                prey_sprite.change_x *= -1
             # Check if we need to bounce of bottom edge
-            if player_sprite.center_y < 0:
-                player_sprite.change_y *= -1
-            if len(self.player_list) < MAX_PLAYER:
-                if player_sprite.breed_point >= 600:
-                    new_player = arcade.Sprite(
-                        ":resources:images/enemies/slimeBlue.png",
-                        SPRITE_SCALING_PLAYER)
-                    new_player.center_x = player_sprite.center_x + random.randrange(-1, 1)
-                    new_player.center_y = player_sprite.center_y + random.randrange(-1, 1)
-                    new_player.change_x = -player_sprite.change_x
-                    new_player.change_y = -player_sprite.change_y
-                    new_player.breed_point = 0
-                    new_gen.append(new_player)
-                    player_sprite.breed_point = 0
+            if prey_sprite.center_y < 0:
+                prey_sprite.change_y *= -1
+            if len(self.prey_list) < MAX_PREY:
+                if prey_sprite.breed_point >= 600:
+                    new_prey = arcade.Sprite(PREY_IMAGE, SPRITE_SCALING_PREY)
+                    new_prey.center_x = prey_sprite.center_x + random.randrange(-1, 1)
+                    new_prey.center_y = prey_sprite.center_y + random.randrange(-1, 1)
+                    new_prey.change_x = -prey_sprite.change_x
+                    new_prey.change_y = -prey_sprite.change_y
+                    new_prey.breed_point = 0
+                    new_gen.append(new_prey)
+                    prey_sprite.breed_point = 0
                 else:
-                    player_sprite.breed_point += random.randrange(1, 6)
+                    prey_sprite.breed_point += random.randrange(1, 6)
         for new in new_gen:
-            self.player_list.append(new)
-        new_coin = arcade.SpriteList()
-        for coin in self.coin_list:
-            coin.hunger()
-            ret = coin.breed()
+            self.prey_list.append(new)
+        new_pred = arcade.SpriteList()
+        for pred in self.pred_list:
+            pred.hunger()
+            ret = pred.breed()
             if ret != 1:
-                new_coin.append(ret)
-            coin.follow_sprite(self.player_list)
-        for new in new_coin:
-            self.coin_list.append(new)
-        # Generate a list of all sprites that collided with the player.
-        for coin in self.coin_list:
-            hit_list = arcade.check_for_collision_with_list(coin, self.player_list)
+                new_pred.append(ret)
+            pred.follow_sprite(self.prey_list)
+        for new in new_pred:
+            self.pred_list.append(new)
+        # Generate a list of all sprites that collided with the prey.
+        for pred in self.pred_list:
+            hit_list = arcade.check_for_collision_with_list(pred, self.prey_list)
             if hit_list is not None:
 
                 # Loop through each colliding sprite, remove it, and add to the score.
-                for player in hit_list:
-                    player.kill()
-                coin.hungry_point += 100*len(hit_list)
+                for prey in hit_list:
+                    prey.kill()
+                pred.hungry_point += 100*len(hit_list)
 
 
 def main():
