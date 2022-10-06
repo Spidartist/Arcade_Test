@@ -59,6 +59,7 @@ class Pred(arcade.Sprite):
             new_pred.center_y = self.center_y + random.randrange(-2, 2)
             new_pred.change_x = random.randrange(-1, 1, 2) * self.change_x
             new_pred.change_y = random.randrange(-1, 1, 2) * self.change_y
+            new_pred.angle = self.angle + 180
             self.breed_point = 0
             return new_pred
         else:
