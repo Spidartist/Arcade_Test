@@ -19,10 +19,10 @@ import os
 # --- Constants ---
 SPRITE_SCALING_PREY = 0.9
 SPRITE_SCALING_PRED = 0.7
-PRED_COUNT = 1
-PRED_SPEED = 1.0
+PRED_COUNT = 5
+PRED_SPEED = 1.2
 
-PREY_COUNT = 5
+PREY_COUNT = 10
 MAX_PREY = 30
 
 SCREEN_WIDTH = 1200
@@ -57,6 +57,8 @@ class Pred(arcade.Sprite):
             new_pred = Pred(PRED_IMAGE, SPRITE_SCALING_PRED)
             new_pred.center_x = self.center_x + random.randrange(-2, 2)
             new_pred.center_y = self.center_y + random.randrange(-2, 2)
+            new_pred.change_x = random.randrange(-1, 1, 2) * self.change_x
+            new_pred.change_y = random.randrange(-1, 1, 2) * self.change_y
             self.breed_point = 0
             return new_pred
         else:
@@ -73,7 +75,7 @@ class Pred(arcade.Sprite):
             if distance < min_dist:
                 min_dist = distance
                 closest = prey_sprite
-        return closest
+        return closest, min_dist
 
     def follow_sprite(self, prey_list):
         """
@@ -84,7 +86,7 @@ class Pred(arcade.Sprite):
         the target sprite, and not jump around if the sprite is not off
         an exact multiple of SPRITE_SPEED.
         """
-        prey_sprite = self.find_closest(prey_list)
+        prey_sprite, min_dist = self.find_closest(prey_list)
         self.center_x += self.change_x
         self.center_y += self.change_y
 
@@ -107,8 +109,8 @@ class Pred(arcade.Sprite):
             self.angle = math.degrees(angle) + 90
             # Taking into account the angle, calculate our change_x
             # and change_y. Velocity is how fast the bullet travels.
-            self.change_x = math.cos(angle) * PRED_SPEED
-            self.change_y = math.sin(angle) * PRED_SPEED
+            self.change_x = math.cos(angle) * PRED_SPEED * 1.3 * (SCREEN_WIDTH / (min_dist * 5))
+            self.change_y = math.sin(angle) * PRED_SPEED * 1.3 * (SCREEN_HEIGHT / (min_dist * 5))
 
 
 class MyGame(arcade.Window):
@@ -177,13 +179,12 @@ class MyGame(arcade.Window):
             arcade.draw_text(output, 10, i*20, arcade.color.WHITE, 14)
         for i, pred in enumerate(self.pred_list):
             angle_rad = math.radians(pred.angle)
-
-            arcade.draw_line(pred.center_x, pred.center_y, pred.center_x - 20 * math.sin(angle_rad), pred.center_y + 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
+            arcade.draw_line(pred.center_x, pred.center_y, pred.center_x + 20 * math.sin(angle_rad), pred.center_y - 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
             output = f"Breed: {pred.breed_point}"
             arcade.draw_text(output, 900, i*20, arcade.color.WHITE, 14)
-        for i, pred in enumerate(self.pred_list):
             output = f"Hungry: {pred.hungry_point}"
-            arcade.draw_text(output, 1050, i*20, arcade.color.WHITE, 14)
+            arcade.draw_text(output, 1050, i * 20, arcade.color.WHITE, 14)
+
         if self.winner is not None:
             output = self.winner + " win!"
             arcade.draw_text(output, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, arcade.color.WHITE, 14)
@@ -235,7 +236,19 @@ class MyGame(arcade.Window):
             ret = pred.breed()
             if ret != 1:
                 new_pred.append(ret)
-            pred.follow_sprite(self.prey_list)
+            if len(self.prey_list) > 0:
+                pred.follow_sprite(self.prey_list)
+            if pred.center_x > SCREEN_WIDTH:
+                pred.center_x = SCREEN_WIDTH
+            # Check if we need to bounce of top edge
+            if pred.center_y > SCREEN_HEIGHT:
+                pred.center_y = SCREEN_HEIGHT
+            # Check if we need to bounce of left edge
+            if pred.center_x < 0:
+                pred.center_x = 0
+            # Check if we need to bounce of bottom edge
+            if pred.center_y < 0:
+                pred.center_y = 0
         for new in new_pred:
             self.pred_list.append(new)
         # Generate a list of all sprites that collided with the prey.
