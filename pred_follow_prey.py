@@ -35,6 +35,54 @@ PRED_IMAGE = ":resources:images/topdown_tanks/tank_red.png"
 PREY_IMAGE = ":resources:images/topdown_tanks/tank_blue.png"
 
 
+class Prey(arcade.Sprite):
+    """
+    This class represents the preds on our screen. It is a child class of
+    the arcade library's "Sprite" class.
+    """
+    def __init__(self, *args):
+        super(Prey, self).__init__(*args)
+        self.angle = 180
+        
+    def find_closest(self, pred_list):
+        min_dist = 10000
+        closest = None
+        for pred_sprite in pred_list:
+            x_diff = pred_sprite.center_x - self.center_x
+            y_diff = pred_sprite.center_y - self.center_y
+            distance = math.sqrt(x_diff ** 2 + y_diff ** 2)
+            if distance < min_dist:
+                min_dist = distance
+                closest = pred_sprite
+        return closest, min_dist
+
+    def juke_kill(self, pred_list):
+        pred_sprite, min_dist = self.find_closest(pred_list)
+        self.center_x += self.change_x
+        self.center_y += self.change_y
+
+        if min_dist <= 200:
+            if random.randrange(100) == 0:
+                start_x = self.center_x
+                start_y = self.center_y
+
+                # Get the destination location for the bullet
+                dest_x = pred_sprite.center_x
+                dest_y = pred_sprite.center_y
+
+                # Do math to calculate how to get the bullet to the destination.
+                # Calculation the angle in radians between the start points
+                # and end points. This is the angle the bullet will travel.
+                x_diff = dest_x - start_x
+                y_diff = dest_y - start_y
+                angle = math.atan2(y_diff, x_diff)
+                self.angle = math.degrees(angle)
+                # Taking into account the angle, calculate our change_x
+                # and change_y. Velocity is how fast the bullet travels.
+                self.change_x = math.cos(angle) * SPRITE_SPEED * 4
+                self.change_y = -math.sin(angle) * SPRITE_SPEED * 4
+
+
 class Pred(arcade.Sprite):
     """
     This class represents the preds on our screen. It is a child class of
@@ -44,7 +92,7 @@ class Pred(arcade.Sprite):
         super(Pred, self).__init__(*args)
         self.breed_point = 0
         self.hungry_point = 500
-        self.angle = 110
+        self.angle = 0
 
     def hunger(self):
         if self.hungry_point <= 0:
@@ -78,7 +126,7 @@ class Pred(arcade.Sprite):
                 closest = prey_sprite
         return closest, min_dist
 
-    def follow_sprite(self, prey_list):
+    def follow_prey(self, prey_list):
         """
         This function will move the current sprite towards whatever
         other sprite is specified as a parameter.
@@ -149,7 +197,7 @@ class MyGame(arcade.Window):
 
         # Character image from kenney.nl
         for i in range(PREY_COUNT):
-            prey_sprite = arcade.Sprite(PREY_IMAGE, SPRITE_SCALING_PREY)
+            prey_sprite = Prey(PREY_IMAGE, SPRITE_SCALING_PREY)
             prey_sprite.center_x = random.randrange(SCREEN_WIDTH)
             prey_sprite.center_y = random.randrange(SCREEN_HEIGHT)
             prey_sprite.change_x = 0.6
@@ -176,6 +224,8 @@ class MyGame(arcade.Window):
         self.pred_list.draw()
         self.prey_list.draw()
         for i, prey in enumerate(self.prey_list):
+            angle_rad = math.radians(prey.angle)
+            arcade.draw_line(prey.center_x, prey.center_y, prey.center_x + 20 * math.sin(angle_rad), prey.center_y - 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
             output = f"Prey Breed: {prey.breed_point}"
             arcade.draw_text(output, 10, i*20, arcade.color.WHITE, 14)
         for i, pred in enumerate(self.pred_list):
@@ -203,8 +253,7 @@ class MyGame(arcade.Window):
 
         for prey_sprite in self.prey_list:
             # Move the center of the prey sprite to match the mouse x, y
-            prey_sprite.center_x += prey_sprite.change_x
-            prey_sprite.center_y += prey_sprite.change_y
+            prey_sprite.juke_kill(self.pred_list)
             # Check if we need to bounce of right edge
             if prey_sprite.center_x > SCREEN_WIDTH:
                 prey_sprite.change_x *= -1
@@ -219,11 +268,12 @@ class MyGame(arcade.Window):
                 prey_sprite.change_y *= -1
             if len(self.prey_list) < MAX_PREY:
                 if prey_sprite.breed_point >= 600:
-                    new_prey = arcade.Sprite(PREY_IMAGE, SPRITE_SCALING_PREY)
+                    new_prey = Prey(PREY_IMAGE, SPRITE_SCALING_PREY)
                     new_prey.center_x = prey_sprite.center_x + random.randrange(-1, 1)
                     new_prey.center_y = prey_sprite.center_y + random.randrange(-1, 1)
-                    new_prey.change_x = -prey_sprite.change_x
-                    new_prey.change_y = -prey_sprite.change_y
+                    new_prey.change_x = random.randrange(-1, 1, 2) * prey_sprite.change_x
+                    new_prey.change_y = random.randrange(-1, 1, 2) * prey_sprite.change_y
+                    new_prey.angle = prey_sprite.angle + 180
                     new_prey.breed_point = 0
                     new_gen.append(new_prey)
                     prey_sprite.breed_point = 0
@@ -238,7 +288,7 @@ class MyGame(arcade.Window):
             if ret != 1:
                 new_pred.append(ret)
             if len(self.prey_list) > 0:
-                pred.follow_sprite(self.prey_list)
+                pred.follow_prey(self.prey_list)
             if pred.center_x > SCREEN_WIDTH:
                 pred.center_x = SCREEN_WIDTH
 
