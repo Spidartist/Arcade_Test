@@ -1,4 +1,3 @@
-
 import random
 import arcade
 import math
@@ -30,7 +29,7 @@ class Prey(arcade.Sprite):
     """
     def __init__(self, *args):
         super(Prey, self).__init__(*args)
-        self.angle = 180
+        self.angle = math.degrees(math.atan2(self.change_y, self.change_x)) + 90
         
     def find_closest(self, pred_list):
         min_dist = 10000
@@ -64,11 +63,12 @@ class Prey(arcade.Sprite):
                 x_diff = dest_x - start_x
                 y_diff = dest_y - start_y
                 angle = math.atan2(y_diff, x_diff)
-                self.angle = math.degrees(angle)
                 # Taking into account the angle, calculate our change_x
                 # and change_y. Velocity is how fast the bullet travels.
-                self.change_x = math.cos(angle) * SPRITE_SPEED * 4
-                self.change_y = -math.sin(angle) * SPRITE_SPEED * 4
+                self.change_x = math.sin(angle) * SPRITE_SPEED * 4
+                self.change_y = math.cos(angle) * SPRITE_SPEED * 4
+                changed_angle = math.degrees(math.atan2(self.change_y, self.change_x))
+                self.angle = changed_angle + 90
 
 
 class Pred(arcade.Sprite):
