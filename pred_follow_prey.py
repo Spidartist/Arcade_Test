@@ -30,7 +30,7 @@ class Prey(arcade.Sprite):
     def __init__(self, *args):
         super(Prey, self).__init__(*args)
         self.angle = math.degrees(math.atan2(self.change_y, self.change_x)) + 90
-        
+
     def find_closest(self, pred_list):
         min_dist = 10000
         closest = None
@@ -48,7 +48,7 @@ class Prey(arcade.Sprite):
         self.center_x += self.change_x
         self.center_y += self.change_y
 
-        if min_dist <= 200:
+        if min_dist <= 700:
             if random.randrange(100) == 0:
                 start_x = self.center_x
                 start_y = self.center_y
@@ -65,8 +65,30 @@ class Prey(arcade.Sprite):
                 angle = math.atan2(y_diff, x_diff)
                 # Taking into account the angle, calculate our change_x
                 # and change_y. Velocity is how fast the bullet travels.
-                self.change_x = math.sin(angle) * SPRITE_SPEED * 4
-                self.change_y = math.cos(angle) * SPRITE_SPEED * 4
+                self.change_x = -math.cos(angle) * SPRITE_SPEED * 4
+                self.change_y = -math.sin(angle) * SPRITE_SPEED * 4
+                changed_angle = math.degrees(math.atan2(self.change_y, self.change_x))
+                self.angle = changed_angle + 90
+
+        if min_dist <= 350:
+            if random.randrange(100) == 0:
+                start_x = self.center_x
+                start_y = self.center_y
+
+                # Get the destination location for the bullet
+                dest_x = pred_sprite.center_x
+                dest_y = pred_sprite.center_y
+
+                # Do math to calculate how to get the bullet to the destination.
+                # Calculation the angle in radians between the start points
+                # and end points. This is the angle the bullet will travel.
+                x_diff = dest_x - start_x
+                y_diff = dest_y - start_y
+                angle = math.atan2(y_diff, x_diff)
+                # Taking into account the angle, calculate our change_x
+                # and change_y. Velocity is how fast the bullet travels.
+                self.change_x = math.sin(angle) * SPRITE_SPEED * 6
+                self.change_y = math.cos(angle) * SPRITE_SPEED * 6
                 changed_angle = math.degrees(math.atan2(self.change_y, self.change_x))
                 self.angle = changed_angle + 90
 
@@ -182,7 +204,6 @@ class MyGame(arcade.Window):
         # Sprite lists
         self.prey_list = arcade.SpriteList()
         self.pred_list = arcade.SpriteList()
-
         # Character image from kenney.nl
         for i in range(PREY_COUNT):
             prey_sprite = Prey(PREY_IMAGE, SPRITE_SCALING_PREY)
@@ -213,14 +234,16 @@ class MyGame(arcade.Window):
         self.prey_list.draw()
         for i, prey in enumerate(self.prey_list):
             angle_rad = math.radians(prey.angle)
-            arcade.draw_line(prey.center_x, prey.center_y, prey.center_x + 20 * math.sin(angle_rad), prey.center_y - 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
+            arcade.draw_line(prey.center_x, prey.center_y, prey.center_x + 20 * math.sin(angle_rad),
+                             prey.center_y - 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
             output = f"Prey Breed: {prey.breed_point}"
-            arcade.draw_text(output, 10, i*20, arcade.color.WHITE, 14)
+            arcade.draw_text(output, 10, i * 20, arcade.color.WHITE, 14)
         for i, pred in enumerate(self.pred_list):
             angle_rad = math.radians(pred.angle)
-            arcade.draw_line(pred.center_x, pred.center_y, pred.center_x + 20 * math.sin(angle_rad), pred.center_y - 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
+            arcade.draw_line(pred.center_x, pred.center_y, pred.center_x + 20 * math.sin(angle_rad),
+                             pred.center_y - 20 * math.cos(angle_rad), arcade.color.BLUE, 1)
             output = f"Breed: {pred.breed_point}"
-            arcade.draw_text(output, 900, i*20, arcade.color.WHITE, 14)
+            arcade.draw_text(output, 900, i * 20, arcade.color.WHITE, 14)
             output = f"Hungry: {pred.hungry_point}"
             arcade.draw_text(output, 1050, i * 20, arcade.color.WHITE, 14)
 
@@ -299,7 +322,7 @@ class MyGame(arcade.Window):
                 # Loop through each colliding sprite, remove it, and add to the score.
                 for prey in hit_list:
                     prey.kill()
-                pred.hungry_point += 100*len(hit_list)
+                pred.hungry_point += 100 * len(hit_list)
 
 
 def main():
