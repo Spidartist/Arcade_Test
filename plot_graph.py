@@ -8,8 +8,8 @@ import arcade
 from arcade.gl import BufferDescription
 
 # Window dimensions
-WINDOW_WIDTH = 2300
-WINDOW_HEIGHT = 1300
+WINDOW_WIDTH = 1000
+WINDOW_HEIGHT = 700
 
 # Size of performance graphs
 GRAPH_WIDTH = 200
@@ -31,7 +31,7 @@ class MyWindow(arcade.Window):
         # --- Class instance variables
 
         # Number of balls to move
-        self.num_balls = 40000
+        self.num_balls = 100
 
         # This has something to do with how we break the calculations up
         # and parallelize them.
