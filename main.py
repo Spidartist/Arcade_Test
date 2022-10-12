@@ -57,7 +57,7 @@ class Animal(arcade.Sprite):
             else:
                 self.center_y = self.old_position[1]
             hit = arcade.check_for_collision_with_list(self, lst)
-            if len(hit) > 1:
+            if len(hit) >= 1:
                 self.position = self.old_position
 
     def new_animal(self, image, scale):
@@ -85,7 +85,7 @@ class Animal(arcade.Sprite):
 class Pred(Animal):
     def __init__(self, *args):
         super(Pred, self).__init__(*args)
-        self.hunger_point = 900 # 400
+        self.hunger_point = 400
         self.max_breed = 600
         self.center_x = random.randrange(SCREEN_WIDTH)
         self.center_y = random.randrange(SCREEN_HEIGHT)
@@ -119,7 +119,7 @@ class Pred(Animal):
             x_diff = dest_x - start_x
             y_diff = dest_y - start_y
             dist_diff = math.sqrt(x_diff ** 2 + y_diff ** 2)
-            scale_speed = MAX_DISTANCE / dist_diff / 4
+            scale_speed = MAX_DISTANCE / dist_diff / 6
             angle = math.atan2(y_diff, x_diff)
             self.angle = math.degrees(angle) + 90
 
@@ -136,7 +136,7 @@ class Prey(Animal):
         super(Prey, self).__init__(*args)
         self.hunger_point = 800
         self.max_hunger = 800
-        self.max_breed = 300  # 500
+        self.max_breed = 500
         self.center_x = random.randrange(SCREEN_WIDTH)
         self.center_y = random.randrange(SCREEN_HEIGHT)
         self.change_x = random.randrange(6, 14, 2) / 10 * PREY_SPEED
@@ -290,15 +290,19 @@ class MyGame(arcade.Window):
         new_prey = arcade.SpriteList()
         for prey_sprite in self.prey_list:
             if prey_sprite.center_x > SCREEN_WIDTH:
+                prey_sprite.center_x = SCREEN_WIDTH
                 prey_sprite.change_x *= -1
 
             if prey_sprite.center_y > SCREEN_HEIGHT:
+                prey_sprite.center_y = SCREEN_HEIGHT
                 prey_sprite.change_y *= -1
 
             if prey_sprite.center_x < 0:
+                prey_sprite.center_x = 0
                 prey_sprite.change_x *= -1
 
             if prey_sprite.center_y < 0:
+                prey_sprite.center_y = 0
                 prey_sprite.change_y *= -1
             prey_sprite.angle = prey_sprite.change_angle_func()
 
@@ -319,15 +323,19 @@ class MyGame(arcade.Window):
         new_pred = arcade.SpriteList()
         for pred in self.pred_list:
             if pred.center_x > SCREEN_WIDTH:
+                pred.center_x = SCREEN_WIDTH
                 pred.change_x *= -1
 
             if pred.center_y > SCREEN_HEIGHT:
+                pred.center_y = SCREEN_HEIGHT
                 pred.change_y *= -1
 
             if pred.center_x < 0:
+                pred.center_x = 0
                 pred.change_x *= -1
 
             if pred.center_y < 0:
+                pred.center_y = 0
                 pred.change_y *= -1
             pred.angle = pred.change_angle_func()
 
