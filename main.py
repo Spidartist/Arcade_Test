@@ -326,12 +326,21 @@ class MyGame(arcade.Window):
             self.pred_list.append(new)
 
         for pred in self.pred_list:
-            hit_list = arcade.check_for_collision_with_list(pred, self.prey_list)
-            if hit_list is not None:
-                for prey in hit_list:
+            eat_list = arcade.check_for_collision_with_list(pred, self.prey_list)
+            hit_list = arcade.check_for_collision_with_list(pred, self.pred_list)
+            if len(hit_list) > 1:
+                print(1)
+                for other in hit_list:
+                    if other != pred:
+                        other.center_x -= 20
+                        other.center_y -= 20
+                        other.kill()
+
+            if eat_list is not None:
+                for prey in eat_list:
                     prey.kill()
                     CURRENT_PREY -= 1
-                pred.hunger_point += 100 * len(hit_list)
+                pred.hunger_point += 100 * len(eat_list)
 
 
 def main():
