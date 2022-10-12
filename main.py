@@ -49,16 +49,27 @@ class Animal(arcade.Sprite):
                 closest = diff_sprite
         return closest, min_dist
 
+    def update(self, lst):
+        hit = arcade.check_for_collision_with_list(self, lst)
+        if len(hit) >= 1:  # at last 1, because the ball hits itself
+            if random.randrange(2) == 0:
+                self.center_x = self.old_position[0]
+            else:
+                self.center_y = self.old_position[1]
+            hit = arcade.check_for_collision_with_list(self, lst)
+            if len(hit) > 1:
+                self.position = self.old_position
+
     def new_animal(self, image, scale):
         return Animal(image, scale)
 
     def breed(self):
         if self.breed_point >= self.max_breed:
             new_pred = self.new_animal(self.image, self.scale)
-            new_pred.center_x = self.center_x + random.randrange(-2, 2)
-            new_pred.center_y = self.center_y + random.randrange(-2, 2)
-            new_pred.change_x = random.randrange(-1, 1, 2) * self.change_x
-            new_pred.change_y = random.randrange(-1, 1, 2) * self.change_y
+            new_pred.center_x = self.center_x + random.randrange(-30, 30, 60)
+            new_pred.center_y = self.center_y + random.randrange(-30, 30, 60)
+            new_pred.change_x = random.randrange(-1, 1, 2)/3 * self.change_x
+            new_pred.change_y = random.randrange(-1, 1, 2)/3 * self.change_y
             new_pred.angle = self.angle + 180
             self.breed_point = 0
             return new_pred
@@ -70,10 +81,11 @@ class Animal(arcade.Sprite):
         return math.degrees(math.atan2(self.change_y, self.change_x)) + 90
 
 
+
 class Pred(Animal):
     def __init__(self, *args):
         super(Pred, self).__init__(*args)
-        self.hunger_point = 400
+        self.hunger_point = 900 # 400
         self.max_breed = 600
         self.center_x = random.randrange(SCREEN_WIDTH)
         self.center_y = random.randrange(SCREEN_HEIGHT)
@@ -82,6 +94,7 @@ class Pred(Animal):
         self.angle = self.change_angle_func()
         self.image = PRED_IMAGE
         self.scale = SPRITE_SCALING_PRED
+        self.old_position = (self.center_x, self.center_y)
 
     def hunger(self):
         global CURRENT_PRED
@@ -92,11 +105,10 @@ class Pred(Animal):
             self.hunger_point -= 1
 
     def follow_prey(self, prey_list):
+        self.old_position = self.position
         prey_sprite, min_dist = self.find_closest(prey_list)
-        self.center_x += self.change_x
-        self.center_y += self.change_y
 
-        if random.randrange(100) == 0:
+        if random.randrange(20) == 0:
             start_x = self.center_x
             start_y = self.center_y
 
@@ -107,13 +119,14 @@ class Pred(Animal):
             x_diff = dest_x - start_x
             y_diff = dest_y - start_y
             dist_diff = math.sqrt(x_diff ** 2 + y_diff ** 2)
-            scale_speed = MAX_DISTANCE / dist_diff / 2
+            scale_speed = MAX_DISTANCE / dist_diff / 4
             angle = math.atan2(y_diff, x_diff)
             self.angle = math.degrees(angle) + 90
 
             self.change_x = math.cos(angle) * PRED_SPEED * scale_speed
             self.change_y = math.sin(angle) * PRED_SPEED * scale_speed
-
+        self.center_x += self.change_x
+        self.center_y += self.change_y
     def new_animal(self, image, scale):
         return Pred(image, scale)
 
@@ -123,7 +136,7 @@ class Prey(Animal):
         super(Prey, self).__init__(*args)
         self.hunger_point = 800
         self.max_hunger = 800
-        self.max_breed = 500
+        self.max_breed = 300  # 500
         self.center_x = random.randrange(SCREEN_WIDTH)
         self.center_y = random.randrange(SCREEN_HEIGHT)
         self.change_x = random.randrange(6, 14, 2) / 10 * PREY_SPEED
@@ -134,6 +147,7 @@ class Prey(Animal):
         self.need_heal = False
         self.image = PREY_IMAGE
         self.scale = SPRITE_SCALING_PREY
+        self.old_position = (self.center_x, self.center_y)
 
     def hunger(self):
         if not self.need_heal:
@@ -152,10 +166,11 @@ class Prey(Animal):
             self.need_heal = False
 
     def juke_kill(self, pred_list):
+        self.old_position = self.position
         pred_sprite, min_dist = self.find_closest(pred_list)
 
         if min_dist <= self.dst_away:
-            if random.randrange(100) == 0:
+            if random.randrange(30) == 0:
                 start_x = self.center_x
                 start_y = self.center_y
 
@@ -291,6 +306,7 @@ class MyGame(arcade.Window):
                 prey_sprite.hunger()
                 prey_sprite.heal()
                 prey_sprite.juke_kill(self.pred_list)
+                prey_sprite.update(self.prey_list)
 
                 if CURRENT_PREY < MAX_PREY:
                     ret = prey_sprite.breed()
@@ -316,8 +332,9 @@ class MyGame(arcade.Window):
             pred.angle = pred.change_angle_func()
 
             if CURRENT_PRED > 0 and CURRENT_PREY > 0:
-                pred.follow_prey(self.prey_list)
                 pred.hunger()
+                pred.follow_prey(self.prey_list)
+                pred.update(self.pred_list)
                 ret = pred.breed()
                 if ret != 1:
                     new_pred.append(ret)
@@ -327,15 +344,6 @@ class MyGame(arcade.Window):
 
         for pred in self.pred_list:
             eat_list = arcade.check_for_collision_with_list(pred, self.prey_list)
-            hit_list = arcade.check_for_collision_with_list(pred, self.pred_list)
-            if len(hit_list) > 1:
-                print(1)
-                for other in hit_list:
-                    if other != pred:
-                        other.center_x -= 20
-                        other.center_y -= 20
-                        other.kill()
-
             if eat_list is not None:
                 for prey in eat_list:
                     prey.kill()
